@@ -1,0 +1,52 @@
+docker stack deploy --compose-file /path/to/docker-compose.yml mystack
+
+minikube version
+minikube start
+kubectl version
+kubectl cluster-info
+kubectl get nodes
+kubectl create deployment kubernetes-bootcamp --image=gcr.io/google-samples/kubernetes-bootcamp:v1
+
+# Setup prometheus for Kubernetes
+wget https://github.com/prometheus/prometheus/releases/download/v2.19.0/prometheus-2.19.0.linux-amd64.tar.gz
+tar xvfz prometheus-2.19.0.linux-amd64.tar.gz
+cd prometheus-2.19.0.linux-amd64/
+
+# Configure Prometheus by creating a prometheus.yml file
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first.rules"
+  # - "second.rules"
+
+scrape_configs:
+  - job_name: prometheus
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:9090']
+      - targets: ['localhost:8080', 'localhost:8081']
+        labels:
+          group: 'production'
+      - targets: ['localhost:8082']
+        labels:
+          group: 'canary'
+
+# Start prometheus
+./prometheus --config.file=prometheus.yml
+
+http://localhost:9090/graph -> 
+    rate(promhttp_metric_handler_requests_total{code="200"}[1m])
+    rpc_durations_seconds
+
+# Fetch the client library code and compile example.
+git clone https://github.com/prometheus/client_golang.git
+cd client_golang/examples/random
+go get -d
+go build
+
+# Start 3 example targets in separate terminals:
+./random -listen-address=:8080
+./random -listen-address=:8081
+./random -listen-address=:8082
